@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Music Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Floating Background Elements -->
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration-2"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <span class="logo-icon">🎵</span>
+                <span class="logo-text">MusicLib</span>
+            </div>
+            <div class="nav-stats">
+                <span id="songCount" class="stat">0 Songs</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1 class="hero-title">Online Music Library</h1>
+            <p class="hero-subtitle">Manage your personal music collection with ease</p>
+        </section>
+
+        <!-- Search & Actions Section -->
+        <section class="controls-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input"
+                    placeholder="🔍 Search songs by title, artist, or album..." 
+                    autocomplete="off"
+                />
+                <button onclick="loadAllSongs()" class="btn-reset" title="Reset search">✕</button>
+            </div>
+
+            <button onclick="showAddForm()" class="btn-primary btn-add-song">
+                <span>➕</span> Add New Song
+            </button>
+        </section>
+
+        <!-- Add Song Modal -->
+        <div id="addFormOverlay" class="modal-overlay hidden" onclick="hideAddForm(event)"></div>
+        <div id="addForm" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add New Song to Library</h2>
+                    <button class="modal-close" onclick="hideAddForm()">✕</button>
+                </div>
+                
+                <form onsubmit="addSong(event)" class="add-form">
+                    <div class="form-group">
+                        <label for="songTitle">Song Title *</label>
+                        <input type="text" id="songTitle" placeholder="Enter song title" required />
+                        <span class="form-hint">The name of your song</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="artistName">Artist Name *</label>
+                        <input type="text" id="artistName" placeholder="Enter artist name" required />
+                        <span class="form-hint">Artist or performer name</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="albumName">Album Name *</label>
+                        <input type="text" id="albumName" placeholder="Enter album name" required />
+                        <span class="form-hint">Album or collection name</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duration">Duration (seconds) *</label>
+                        <input type="number" id="duration" min="1" placeholder="Enter duration in seconds" required />
+                        <span class="form-hint">Song length in seconds (e.g., 240 for 4 minutes)</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary btn-submit">Add Song</button>
+                        <button type="button" onclick="hideAddForm()" class="btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading your music library...</p>
+        </div>
+
+        <div id="error" class="alert alert-error hidden"></div>
+        <div id="success" class="alert alert-success hidden"></div>
+
+        <!-- Songs List Section -->
+        <section class="songs-section">
+            <div id="songsList" class="songs-grid">
+                <!-- Songs will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-icon">🎶</div>
+            <h2>Your library is empty</h2>
+            <p>Start by adding your first song to the collection</p>
+            <button onclick="showAddForm()" class="btn-primary">Add Your First Song</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 Music Library | Built with ❤️ using Java, MySQL & Web Technologies</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
