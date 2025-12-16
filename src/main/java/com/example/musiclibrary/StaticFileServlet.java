@@ -4,9 +4,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class StaticFileServlet extends HttpServlet {
     @Override
@@ -28,7 +29,13 @@ public class StaticFileServlet extends HttpServlet {
             return;
         }
 
-        // Try to load resource
+        // Check if request is for an audio file
+        if (path.startsWith("uploads/audio/")) {
+            serveAudioFile(path, response);
+            return;
+        }
+
+        // Try to load resource from classpath
         InputStream resourceStream = getClass().getClassLoader().getResourceAsStream("webapp/" + path);
         
         if (resourceStream == null) {
@@ -57,6 +64,34 @@ public class StaticFileServlet extends HttpServlet {
         }
     }
 
+    private void serveAudioFile(String path, HttpServletResponse response) throws IOException {
+        Path filePath = Paths.get(path);
+
+        // Check if file exists
+        if (!Files.exists(filePath)) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        // Set content type based on file extension
+        String contentType = getContentType(path);
+        response.setContentType(contentType);
+        
+        // Set cache headers for audio files
+        response.setHeader("Cache-Control", "public, max-age=604800");
+        response.setHeader("Accept-Ranges", "bytes");
+
+        // Send file
+        try (InputStream fileStream = Files.newInputStream(filePath);
+             OutputStream out = response.getOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fileStream.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+        }
+    }
+
     private String getContentType(String path) {
         if (path.endsWith(".html")) return "text/html";
         if (path.endsWith(".css")) return "text/css";
@@ -65,7 +100,12 @@ public class StaticFileServlet extends HttpServlet {
         if (path.endsWith(".png")) return "image/png";
         if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
         if (path.endsWith(".svg")) return "image/svg+xml";
-        return "text/plain";
+        if (path.endsWith(".mp3")) return "audio/mpeg";
+        if (path.endsWith(".wav")) return "audio/wav";
+        if (path.endsWith(".ogg")) return "audio/ogg";
+        if (path.endsWith(".m4a")) return "audio/mp4";
+        return "application/octet-stream";
     }
 }
+
 

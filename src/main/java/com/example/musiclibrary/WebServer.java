@@ -25,7 +25,10 @@ public class WebServer {
             server.setHandler(context);
 
             // Register servlets
+            context.addServlet(new ServletHolder(new AuthServlet()), "/api/auth/*");
             context.addServlet(new ServletHolder(new SongsServlet()), "/api/songs/*");
+            context.addServlet(new ServletHolder(new PlaylistServlet()), "/api/playlists/*");
+            context.addServlet(new ServletHolder(new AudioStreamServlet()), "/api/audio/*");
             context.addServlet(new ServletHolder(new StaticFileServlet()), "/*");
 
             // Start server

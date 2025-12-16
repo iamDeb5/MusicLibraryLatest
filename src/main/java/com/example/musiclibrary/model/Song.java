@@ -7,6 +7,7 @@ public class Song {
     private String artistName;
     private String albumName;
     private int durationSeconds;
+    private String audioFilePath; // Path to audio file
 
     public int getId() {
         return id;
@@ -48,6 +49,13 @@ public class Song {
         this.durationSeconds = durationSeconds;
     }
 
+    public String getAudioFilePath() {
+        return audioFilePath;
+    }
+
+    public void setAudioFilePath(String audioFilePath) {
+        this.audioFilePath = audioFilePath;
+    }
     @Override
     public String toString() {
         int minutes = durationSeconds / 60;

@@ -56,11 +56,61 @@ public class SongsServlet extends HttpServlet {
     }
 
     @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+
+        PrintWriter out = response.getWriter();
+
+        try {
+            String pathInfo = request.getPathInfo();
+            if (pathInfo == null || pathInfo.equals("/")) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"success\": false, \"message\": \"Song ID required\"}");
+                return;
+            }
+
+            // Extract song ID from path (e.g., /123)
+            String idStr = pathInfo.substring(1);
+            int songId;
+            try {
+                songId = Integer.parseInt(idStr);
+            } catch (NumberFormatException e) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"success\": false, \"message\": \"Invalid song ID\"}");
+                return;
+            }
+
+            Connection connection = DatabaseConnection.getConnection();
+            SongDao songDao = new SongDao(connection);
+
+            boolean success = songDao.deleteSong(songId);
+
+            if (success) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                out.print("{\"success\": true, \"message\": \"Song deleted successfully\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                out.print("{\"success\": false, \"message\": \"Song not found\"}");
+            }
+
+            connection.close();
+        } catch (SQLException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"success\": false, \"message\": \"" + e.getMessage() + "\"}");
+        }
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Access-Control-Allow-Origin", "*");
+
+        PrintWriter out = response.getWriter();
 
         try {
             Connection connection = DatabaseConnection.getConnection();
@@ -76,20 +126,18 @@ public class SongsServlet extends HttpServlet {
             Song song = objectMapper.readValue(jsonBody.toString(), Song.class);
             boolean success = songDao.addSong(song);
 
-            PrintWriter out = response.getWriter();
             if (success) {
-                response.setStatus(HttpServletResponse.SC_CREATED);
-                out.print("{\"success\":true,\"message\":\"Song added successfully\"}");
+                response.setStatus(HttpServletResponse.SC_OK);
+                out.print("{\"success\": true, \"message\": \"Song added successfully\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                out.print("{\"success\":false,\"message\":\"Failed to add song\"}");
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.print("{\"success\": false, \"message\": \"Failed to add song\"}");
             }
 
             connection.close();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            PrintWriter out = response.getWriter();
-            out.print("{\"error\":\"" + e.getMessage() + "\"}");
+            out.print("{\"success\": false, \"message\": \"" + e.getMessage() + "\"}");
         }
     }
 }

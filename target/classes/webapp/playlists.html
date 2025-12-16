@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlists - MusicLib</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-content">
+            <div class="logo">
+                <a href="index.html" class="logo-icon">🎵</a>
+                <span class="logo-text">MusicLib</span>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">🎵 Songs</a>
+                <a href="playlists.html" class="nav-link active">📋 Playlists</a>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-primary" onclick="showCreatePlaylistModal()">➕ Create Playlist</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="hero">
+            <h1 class="hero-title">Playlists</h1>
+            <p class="hero-subtitle">Create and manage your playlists</p>
+        </section>
+
+        <section class="playlists-page">
+            <div id="playlistsList" class="playlists-list page-list">
+                <!-- Playlists injected here -->
+            </div>
+        </section>
+
+        <!-- Modals (same as before) -->
+        <div id="playlistModalOverlay" class="modal-overlay hidden" onclick="hidePlaylistModal(event)"></div>
+        <div id="playlistModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="playlistModalTitle">Create Playlist</h2>
+                    <button class="modal-close" onclick="hidePlaylistModal()">✕</button>
+                </div>
+                <form id="playlistForm" class="add-form" onsubmit="submitPlaylistForm(event)">
+                    <input type="hidden" id="playlistId" />
+                    <div class="form-group">
+                        <label for="playlistName">Name *</label>
+                        <input type="text" id="playlistName" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="playlistDescription">Description</label>
+                        <input type="text" id="playlistDescription" />
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save</button>
+                        <button type="button" class="btn-secondary" onclick="hidePlaylistModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="addToPlaylistOverlay" class="modal-overlay hidden" onclick="hideAddToPlaylistModal(event)"></div>
+        <div id="addToPlaylistModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add to Playlist</h2>
+                    <button class="modal-close" onclick="hideAddToPlaylistModal()">✕</button>
+                </div>
+                <div class="add-form">
+                    <input type="hidden" id="songToAddId" />
+                    <div id="noPlaylistsMessage" class="alert alert-info hidden" style="margin-bottom: 15px;">
+                        No playlists yet? Create one below!
+                    </div>
+                    <div class="form-group">
+                        <label for="selectPlaylist">Choose playlist</label>
+                        <select id="selectPlaylist"></select>
+                    </div>
+                    <div id="createPlaylistInline" class="hidden">
+                        <div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">
+                            <h3 style="font-size: 14px; margin-bottom: 10px;">Or create a new playlist</h3>
+                            <div class="form-group">
+                                <label for="newPlaylistName">Playlist Name *</label>
+                                <input type="text" id="newPlaylistName" placeholder="Enter playlist name" />
+                            </div>
+                            <div class="form-group">
+                                <label for="newPlaylistDesc">Description</label>
+                                <input type="text" id="newPlaylistDesc" placeholder="Optional description" />
+                            </div>
+                            <button class="btn-secondary btn-sm" onclick="quickCreatePlaylist(event)" style="margin-bottom: 10px;">Create & Add Song</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button id="addButton" class="btn-primary" onclick="submitAddToPlaylist(event)">Add</button>
+                        <button type="button" class="btn-secondary" onclick="hideAddToPlaylistModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Loading playlists...</p>
+        </div>
+
+        <div id="error" class="alert alert-error hidden"></div>
+        <div id="success" class="alert alert-success hidden"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>© 2024 Music Library</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize playlists page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPlaylists();
+        });
+
+        function renderPlaylistsPage() {
+            const list = document.getElementById('playlistsList');
+            if (!list) return;
+            if (!playlistsCache || playlistsCache.length === 0) {
+                list.innerHTML = '<div class="empty-playlists">No playlists yet. Click Create Playlist to begin.</div>';
+                return;
+            }
+            list.innerHTML = playlistsCache.map(p => `
+                <div class="playlist-item page-item">
+                    <div class="page-item-main" onclick="location.href='playlists.html?open=${p.id}'">
+                        <div class="playlist-name">${escapeHtml(p.name)}</div>
+                        <div class="playlist-count">${p.songCount || 0} songs</div>
+                        <div class="playlist-desc">${escapeHtml(p.description || '')}</div>
+                    </div>
+                    <div class="playlist-actions">
+                        <button class="btn-secondary btn-sm" onclick="editPlaylist(event, ${p.id})">✎</button>
+                        <button class="btn-secondary btn-sm" onclick="deletePlaylist(event, ${p.id})">🗑</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Override renderPlaylistsSidebar with page render
+        function renderPlaylistsSidebar() { renderPlaylistsPage(); }
+
+        function editPlaylist(e, id) {
+            e.stopPropagation();
+            // fetch playlist details
+            fetch(`${API_PLAYLISTS}/${id}`).then(r => r.json()).then(p => showCreatePlaylistModal(p)).catch(err => showError('Failed to fetch playlist'));
+        }
+    </script>
+</body>
+</html>
